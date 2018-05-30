@@ -2,10 +2,11 @@ package bigip
 
 import (
 	"fmt"
-	"log"
-	"regexp"
 	"github.com/f5devcentral/go-bigip"
 	"github.com/hashicorp/terraform/helper/schema"
+	"log"
+	"regexp"
+	"strings"
 )
 
 func resourceBigipLtmNode() *schema.Resource {
@@ -16,9 +17,8 @@ func resourceBigipLtmNode() *schema.Resource {
 		Delete: resourceBigipLtmNodeDelete,
 		Exists: resourceBigipLtmNodeExists,
 		Importer: &schema.ResourceImporter{
-		 State: schema.ImportStatePassthrough,
-	 },
-
+			State: schema.ImportStatePassthrough,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -204,7 +204,7 @@ func resourceBigipLtmNodeUpdate(d *schema.ResourceData, meta interface{}) error 
 			DynamicRatio:    d.Get("dynamic_ratio").(int),
 			Monitor:         d.Get("monitor").(string),
 			RateLimit:       d.Get("rate_limit").(string),
-			State:       d.Get("state").(string),
+			State:           d.Get("state").(string),
 		}
 	} else {
 		node = &bigip.Node{
@@ -212,7 +212,7 @@ func resourceBigipLtmNodeUpdate(d *schema.ResourceData, meta interface{}) error 
 			DynamicRatio:    d.Get("dynamic_ratio").(int),
 			Monitor:         d.Get("monitor").(string),
 			RateLimit:       d.Get("rate_limit").(string),
-			State:       d.Get("state").(string),
+			State:           d.Get("state").(string),
 		}
 		node.FQDN.Name = address
 	}
@@ -236,20 +236,23 @@ func resourceBigipLtmNodeDelete(d *schema.ResourceData, meta interface{}) error 
 		d.SetId("")
 		return nil
 	}
-	regex := regexp.MustCompile("referenced by a member of pool '\\/\\w+/([\\w-_.]+)")
+	poolRegex := regexp.MustCompile(`referenced by a member of pool '(\/\w+\/[\w-_.]+)'`)
 	for err != nil {
-		log.Printf("[INFO] Deleting %s from pools...\n", name)
-		parts := regex.FindStringSubmatch(err.Error())
-		if len(parts) > 1 {
-			poolName := parts[1]
+		errParts := poolRegex.FindStringSubmatch(err.Error())
+		if len(errParts) > 1 {
+			poolName := errParts[1]
+			log.Printf("[INFO] Deleting node %s from pool %s\n", name, poolName)
 			members, e := client.PoolMembers(poolName)
 			if e != nil {
 				return e
 			}
 			for _, member := range members.PoolMembers {
-				e = client.DeletePoolMember(poolName, member.Name)
-				if e != nil {
-					return e
+				if strings.Contains(member.FullPath, name) {
+					e = client.DeletePoolMember(poolName, member.Name)
+					if e != nil {
+						return e
+					}
+					break
 				}
 			}
 			err = client.DeleteNode(name)
@@ -259,5 +262,3 @@ func resourceBigipLtmNodeDelete(d *schema.ResourceData, meta interface{}) error 
 	}
 	return err
 }
-
- 
