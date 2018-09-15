@@ -49,7 +49,7 @@ func resourceBigipLtmIRuleCreate(d *schema.ResourceData, meta interface{}) error
 
 	err := client.CreateIRule(name, d.Get("irule").(string))
 	if err != nil {
-		log.Printf("[ERROR] Unable to Create Irule %s %v ", name, err)
+		log.Printf("[ERROR] Unable to Create iRule %s: %v ", name, err)
 		return err
 	}
 
@@ -74,7 +74,7 @@ func resourceBigipLtmIRuleRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 	if err := d.Set("irule", irule.Rule); err != nil {
-		return fmt.Errorf("Error saving iRule (%s) to state: %s", name, err)
+		return fmt.Errorf("Error saving iRule (%s) to state: %v", name, err)
 	}
 
 	return nil
@@ -88,11 +88,11 @@ func resourceBigipLtmIRuleExists(d *schema.ResourceData, meta interface{}) (bool
 
 	irule, err := client.IRule(name)
 	if err != nil {
-		log.Printf("[ERROR] Unable to retrive iRule (%s) (%v) ", name, err)
+		log.Printf("[ERROR] Unable to retrieve iRule %s: %v", name, err)
 		return false, err
 	}
 	if irule == nil {
-		log.Printf("[WARN] irule (%s) not found, removing from state", d.Id())
+		log.Printf("[WARN] iRule (%s) not found, removing from state", name)
 		d.SetId("")
 		return false, nil
 	}
@@ -111,7 +111,7 @@ func resourceBigipLtmIRuleUpdate(d *schema.ResourceData, meta interface{}) error
 
 	err := client.ModifyIRule(name, r)
 	if err != nil {
-		log.Printf("[ERROR] Unable to Modify iRule (%s) (%v) ", name, err)
+		log.Printf("[ERROR] Unable to modify iRule %s: %v", name, err)
 		return err
 	}
 	return resourceBigipLtmIRuleRead(d, meta)
@@ -122,7 +122,7 @@ func resourceBigipLtmIRuleDelete(d *schema.ResourceData, meta interface{}) error
 	name := d.Id()
 	err := client.DeleteIRule(name)
 	if err != nil {
-		log.Printf("[ERROR] Unable to Delete iRule (%s) (%v)", name, err)
+		log.Printf("[ERROR] Unable to delete iRule %s: %v", name, err)
 		return err
 	}
 	d.SetId("")
