@@ -65,18 +65,18 @@ func resourceBigipLtmIRuleRead(d *schema.ResourceData, meta interface{}) error {
 
 	irule, err := client.IRule(name)
 	if err != nil {
-		log.Printf("[ERROR] Unbale to retrive Irule %s %v : ", name, err)
+		log.Printf("[ERROR] Unbale to retrieve iRule %s: %v", name, err)
 		return err
 	}
 	if irule == nil {
-		log.Printf("[WARN] irule (%s) not found, removing from state", d.Id())
+		log.Printf("[WARN] iRule (%s) not found, removing from state", name)
 		d.SetId("")
 		return nil
 	}
 	if err := d.Set("irule", irule.Rule); err != nil {
-		return fmt.Errorf("[DEBUG] Error saving IRule  to state for IRule (%s): %s", d.Id(), err)
+		return fmt.Errorf("Error saving iRule (%s) to state: %s", name, err)
 	}
-	d.Set("name", name)
+
 	return nil
 }
 
