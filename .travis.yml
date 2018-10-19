@@ -1,7 +1,7 @@
 sudo: false
 language: go
 go:
-  - 1.9
+  - 1.11
 go_import_path: github.com/f5devcentral/terraform-provider-bigip
 testacc:
   - make test
