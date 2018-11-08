@@ -1,3 +1,4 @@
+# This repo is Deprecated please use https://github.com/terraform-providers/terraform-provider-bigip
 # Overview
 
 A [Terraform](terraform.io) provider for F5 BigIP LTM.
